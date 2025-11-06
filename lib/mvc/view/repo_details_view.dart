@@ -36,9 +36,9 @@ class RepoDetailsView extends StatelessWidget {
               Expanded(
                 child: Text(
                   repo.fullName.isNotEmpty ? repo.fullName : repo.name,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -68,24 +68,15 @@ class RepoDetailsView extends StatelessWidget {
                 label: '${repo.forksCount} forks',
               ),
               if (repo.language.isNotEmpty)
-                _ChipIcon(
-                  icon: Icons.code,
-                  label: repo.language,
-                ),
+                _ChipIcon(icon: Icons.code, label: repo.language),
             ],
           ),
 
           const SizedBox(height: 20),
 
           // Info rows: created / updated dates
-          _InfoRow(
-            label: 'Created at',
-            value: _fmtDate(repo.createdAt),
-          ),
-          _InfoRow(
-            label: 'Last updated',
-            value: _fmtDate(repo.updatedAt),
-          ),
+          _InfoRow(label: 'Created at', value: _fmtDate(repo.createdAt)),
+          _InfoRow(label: 'Last updated', value: _fmtDate(repo.updatedAt)),
 
           const SizedBox(height: 24),
 
@@ -94,20 +85,24 @@ class RepoDetailsView extends StatelessWidget {
             icon: const Icon(Icons.open_in_new),
             label: const Text('Open on GitHub'),
             onPressed: () async {
-              final url = Uri.tryParse(repo.htmlUrl);
-              if (url != null) {
-                if (await canLaunchUrl(url)) {
-                  await launchUrl(
-                    url,
-                    mode: LaunchMode.externalApplication,
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Could not open GitHub URL'),
-                    ),
-                  );
-                }
+              if (repo.htmlUrl.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Missing GitHub URL')),
+                );
+                return;
+              }
+
+              final url = Uri.parse(repo.htmlUrl);
+
+              final ok = await launchUrl(
+                url,
+                mode: LaunchMode.externalApplication,
+              );
+
+              if (!ok) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Could not open GitHub URL')),
+                );
               }
             },
           ),
@@ -129,27 +124,17 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final styleLabel = Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.color
-              ?.withOpacity(0.8),
-        );
+      color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.8),
+    );
     final styleValue = Theme.of(context).textTheme.bodyMedium;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Expanded(
-            flex: 2,
-            child: Text(label, style: styleLabel),
-          ),
+          Expanded(flex: 2, child: Text(label, style: styleLabel)),
           const SizedBox(width: 8),
-          Expanded(
-            flex: 3,
-            child: Text(value, style: styleValue),
-          ),
+          Expanded(flex: 3, child: Text(value, style: styleValue)),
         ],
       ),
     );
