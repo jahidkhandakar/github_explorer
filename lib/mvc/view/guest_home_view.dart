@@ -44,7 +44,10 @@ class _GuestHomeViewState extends State<GuestHomeView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Guest Mode'),
+        title: Obx(() {
+          final u = ctrl.user.value?.login ?? '';
+          return Text(u.isEmpty ? 'Guest Mode' : '$u\'s Repos');
+        }),
         actions: [
           IconButton(
             icon: const Icon(Icons.brightness_6),
@@ -52,16 +55,66 @@ class _GuestHomeViewState extends State<GuestHomeView> {
           ),
         ],
       ),
+
+      // bottom nav like auth mode
+      bottomNavigationBar: SafeArea(
+        child: BottomAppBar(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Obx(
+              () => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  IconButton(
+                    tooltip: 'Back to Welcome',
+                    icon: const Icon(Icons.home),
+                    onPressed: () {
+                      Get.offAllNamed(Routes.welcome);
+                    },
+                  ),
+                  IconButton(
+                    tooltip: 'Sort / Filter',
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: () => _showSortSheet(ctrl),
+                  ),
+                  IconButton(
+                    tooltip: 'Ascending / Descending',
+                    icon: Icon(
+                      ctrl.ascending.value
+                          ? Icons.arrow_upward
+                          : Icons.arrow_downward,
+                    ),
+                    onPressed: ctrl.toggleAsc,
+                  ),
+                  IconButton(
+                    tooltip: 'Toggle view',
+                    icon: Icon(
+                      ctrl.viewMode.value == ViewMode.list
+                          ? Icons.grid_view
+                          : Icons.view_list,
+                    ),
+                    onPressed: ctrl.toggleView,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+
       body: Obx(() {
-        final u = ctrl.user.value?.login ?? '';
+        final username = ctrl.user.value?.login ?? '';
+
         return RefreshIndicator(
           onRefresh: () async {
-            if (u.isNotEmpty) await ctrl.loadFirst(u);
+            if (username.isNotEmpty) {
+              await ctrl.loadFirst(username);
+            }
           },
           child: CustomScrollView(
             controller: _scroll,
             slivers: [
-              // Username search row
+              // 🔝 Row 1: username search
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
@@ -88,7 +141,8 @@ class _GuestHomeViewState extends State<GuestHomeView> {
                   ),
                 ),
               ),
-              // Filter + view toggle row (same vibe as auth)
+
+              // 🔝 Row 2: repo filter + view toggle
               SliverToBoxAdapter(
                 child: Padding(
                   padding:
@@ -107,22 +161,11 @@ class _GuestHomeViewState extends State<GuestHomeView> {
                           onChanged: ctrl.setSearch,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        tooltip: 'Toggle view',
-                        icon: Obx(
-                          () => Icon(
-                            ctrl.viewMode.value == ViewMode.list
-                                ? Icons.grid_view
-                                : Icons.view_list,
-                          ),
-                        ),
-                        onPressed: ctrl.toggleView,
-                      ),
                     ],
                   ),
                 ),
               ),
+
               if (ctrl.loading.value && ctrl.repos.isEmpty)
                 const SliverFillRemaining(child: LoadingView())
               else if (ctrl.error.isNotEmpty && ctrl.repos.isEmpty)
@@ -144,6 +187,7 @@ class _GuestHomeViewState extends State<GuestHomeView> {
 
   Widget _buildRepoSliver() {
     final ctrl = Get.find<GuestRepoController>();
+
     if (ctrl.repos.isEmpty) {
       return const SliverFillRemaining(
         child: Center(child: Text('No repositories loaded yet')),
@@ -204,5 +248,58 @@ class _GuestHomeViewState extends State<GuestHomeView> {
         ),
       );
     }
+  }
+
+  void _showSortSheet(GuestRepoController c) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Get.theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(16),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Sort repositories',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            _sortTile(c, RepoSort.name, 'Name (A → Z / Z → A)'),
+            _sortTile(c, RepoSort.stars, 'Stars (High ↔ Low)'),
+            _sortTile(
+              c,
+              RepoSort.created,
+              'Created date (Newest ↔ Oldest)',
+            ),
+            _sortTile(
+              c,
+              RepoSort.updated,
+              'Updated date (Newest ↔ Oldest)',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sortTile(GuestRepoController c, RepoSort value, String label) {
+    return Obx(
+      () => RadioListTile<RepoSort>(
+        value: value,
+        groupValue: c.sort.value,
+        onChanged: (v) {
+          if (v != null) {
+            c.sort.value = v;
+            c.setSort(v);
+            Get.back();
+          }
+        },
+        title: Text(label),
+      ),
+    );
   }
 }

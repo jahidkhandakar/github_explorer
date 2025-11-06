@@ -68,6 +68,56 @@ class _AuthHomeViewState extends State<AuthHomeView> {
           ),
         ],
       ),
+
+      // 👇 bottom bar with Home, Sort, Asc/Desc, Grid/List
+      bottomNavigationBar: SafeArea(
+        child: BottomAppBar(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Obx(
+              () => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  IconButton(
+                    tooltip: 'My repos',
+                    icon: const Icon(Icons.home),
+                    onPressed: () {
+                      final meLogin = ctrl.me.value?.login ?? '';
+                      if (meLogin.isNotEmpty) {
+                        ctrl.showUser(meLogin);
+                      }
+                    },
+                  ),
+                  IconButton(
+                    tooltip: 'Sort / Filter',
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: () => _showSortSheet(ctrl),
+                  ),
+                  IconButton(
+                    tooltip: 'Ascending / Descending',
+                    icon: Icon(
+                      ctrl.ascending.value
+                          ? Icons.arrow_upward
+                          : Icons.arrow_downward,
+                    ),
+                    onPressed: ctrl.toggleAsc,
+                  ),
+                  IconButton(
+                    tooltip: 'Toggle view',
+                    icon: Icon(
+                      ctrl.viewMode.value == ViewMode.list
+                          ? Icons.grid_view
+                          : Icons.view_list,
+                    ),
+                    onPressed: ctrl.toggleView,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+
       body: Obx(() {
         if (ctrl.loading.value && ctrl.repos.isEmpty) {
           return const LoadingView();
@@ -88,6 +138,7 @@ class _AuthHomeViewState extends State<AuthHomeView> {
           child: CustomScrollView(
             controller: _scroll,
             slivers: [
+              // 🔝 Row 1: search other user's username
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
@@ -110,67 +161,28 @@ class _AuthHomeViewState extends State<AuthHomeView> {
                             ctrl.showUser(_otherUserCtrl.text.trim()),
                         child: const Text('Go'),
                       ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        tooltip: 'My repos',
-                        icon: const Icon(Icons.home),
-                        onPressed: () => ctrl.setSort(ctrl.sort.value),
-                      ),
                     ],
                   ),
                 ),
               ),
-              // Filter + sort + view toggle row
+
+              // 🔝 Row 2: filter text field (name / description)
               SliverToBoxAdapter(
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: const InputDecoration(
-                            hintText:
-                                'Filter repos by name / description...',
-                            border: OutlineInputBorder(),
-                            isDense: true,
-                            prefixIcon: Icon(Icons.search),
-                          ),
-                          onChanged: ctrl.setSearch,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        tooltip: 'Sort / Filter',
-                        icon: const Icon(Icons.filter_list),
-                        onPressed: () => _showSortSheet(ctrl),
-                      ),
-                      IconButton(
-                        tooltip: 'Ascending / Descending',
-                        icon: Obx(
-                          () => Icon(
-                            ctrl.ascending.value
-                                ? Icons.arrow_upward
-                                : Icons.arrow_downward,
-                          ),
-                        ),
-                        onPressed: ctrl.toggleAsc,
-                      ),
-                      IconButton(
-                        tooltip: 'Toggle view',
-                        icon: Obx(
-                          () => Icon(
-                            ctrl.viewMode.value == ViewMode.list
-                                ? Icons.grid_view
-                                : Icons.view_list,
-                          ),
-                        ),
-                        onPressed: ctrl.toggleView,
-                      ),
-                    ],
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Filter repos by name / description...',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: ctrl.setSearch,
                   ),
                 ),
               ),
+
               sliverBody,
             ],
           ),
