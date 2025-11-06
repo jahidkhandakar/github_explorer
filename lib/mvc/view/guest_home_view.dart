@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../controller/guest_repo_controller.dart';
 import '../controller/theme_controller.dart';
 import '../../widgets/repo_list_tile.dart';
@@ -46,8 +47,9 @@ class _GuestHomeViewState extends State<GuestHomeView> {
       appBar: AppBar(
         title: Obx(() {
           final u = ctrl.user.value?.login ?? '';
-          return Text(u.isEmpty ? 'Guest Mode' : '$u\'s Repos');
+          return Text(u.isEmpty ? 'Guest Mode' : "$u's Repos");
         }),
+        automaticallyImplyLeading: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.brightness_6),
@@ -56,7 +58,7 @@ class _GuestHomeViewState extends State<GuestHomeView> {
         ],
       ),
 
-      // bottom nav like auth mode
+      // bottom nav, same vibe as auth
       bottomNavigationBar: SafeArea(
         child: BottomAppBar(
           child: Padding(
@@ -66,10 +68,13 @@ class _GuestHomeViewState extends State<GuestHomeView> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   IconButton(
-                    tooltip: 'Back to Welcome',
+                    tooltip: 'Reload current user repos',
                     icon: const Icon(Icons.home),
                     onPressed: () {
-                      Get.offAllNamed(Routes.welcome);
+                      final username = ctrl.user.value?.login ?? '';
+                      if (username.isNotEmpty) {
+                        ctrl.loadFirst(username);
+                      }
                     },
                   ),
                   IconButton(
@@ -114,7 +119,7 @@ class _GuestHomeViewState extends State<GuestHomeView> {
           child: CustomScrollView(
             controller: _scroll,
             slivers: [
-              // 🔝 Row 1: username search
+              // Row 1: username search
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
@@ -142,26 +147,19 @@ class _GuestHomeViewState extends State<GuestHomeView> {
                 ),
               ),
 
-              // 🔝 Row 2: repo filter + view toggle
+              // Row 2: filter
               SliverToBoxAdapter(
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: const InputDecoration(
-                            hintText:
-                                'Filter repos by name / description...',
-                            border: OutlineInputBorder(),
-                            isDense: true,
-                            prefixIcon: Icon(Icons.search),
-                          ),
-                          onChanged: ctrl.setSearch,
-                        ),
-                      ),
-                    ],
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Filter repos by name / description...',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: ctrl.setSearch,
                   ),
                 ),
               ),
@@ -194,12 +192,14 @@ class _GuestHomeViewState extends State<GuestHomeView> {
       );
     }
 
+    final showLoader = ctrl.loadingMore.value;
+
     if (ctrl.viewMode.value == ViewMode.list) {
       return SliverList.separated(
-        itemCount: ctrl.repos.length + 1,
+        itemCount: ctrl.repos.length + (showLoader ? 1 : 0),
         separatorBuilder: (_, __) => const Divider(height: 0),
         itemBuilder: (context, i) {
-          if (i == ctrl.repos.length) {
+          if (showLoader && i == ctrl.repos.length) {
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(
@@ -222,7 +222,7 @@ class _GuestHomeViewState extends State<GuestHomeView> {
       return SliverPadding(
         padding: const EdgeInsets.all(8),
         sliver: SliverGrid.builder(
-          itemCount: ctrl.repos.length + 1,
+          itemCount: ctrl.repos.length + (showLoader ? 1 : 0),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             childAspectRatio: 1.25,
@@ -230,7 +230,7 @@ class _GuestHomeViewState extends State<GuestHomeView> {
             crossAxisSpacing: 8,
           ),
           itemBuilder: (context, i) {
-            if (i == ctrl.repos.length) {
+            if (showLoader && i == ctrl.repos.length) {
               return const Center(
                 child: SizedBox(
                   height: 24,
@@ -256,9 +256,8 @@ class _GuestHomeViewState extends State<GuestHomeView> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Get.theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(16),
-          ),
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

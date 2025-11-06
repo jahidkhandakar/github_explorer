@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../controller/user_repo_controller.dart';
 import '../controller/theme_controller.dart';
 import '../controller/auth_controller.dart';
@@ -69,7 +70,7 @@ class _AuthHomeViewState extends State<AuthHomeView> {
         ],
       ),
 
-      // 👇 bottom bar with Home, Sort, Asc/Desc, Grid/List
+      // bottom nav bar: Home, Sort, Asc/Desc, Grid/List
       bottomNavigationBar: SafeArea(
         child: BottomAppBar(
           child: Padding(
@@ -138,7 +139,7 @@ class _AuthHomeViewState extends State<AuthHomeView> {
           child: CustomScrollView(
             controller: _scroll,
             slivers: [
-              // 🔝 Row 1: search other user's username
+              // Row 1: other user search
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
@@ -166,7 +167,7 @@ class _AuthHomeViewState extends State<AuthHomeView> {
                 ),
               ),
 
-              // 🔝 Row 2: filter text field (name / description)
+              // Row 2: repo filter
               SliverToBoxAdapter(
                 child: Padding(
                   padding:
@@ -192,11 +193,12 @@ class _AuthHomeViewState extends State<AuthHomeView> {
   }
 
   SliverList _buildList() {
+    final showLoader = ctrl.loadingMore.value;
     return SliverList.separated(
-      itemCount: ctrl.repos.length + 1,
+      itemCount: ctrl.repos.length + (showLoader ? 1 : 0),
       separatorBuilder: (_, __) => const Divider(height: 0),
       itemBuilder: (context, i) {
-        if (i == ctrl.repos.length) {
+        if (showLoader && i == ctrl.repos.length) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Center(
@@ -218,10 +220,11 @@ class _AuthHomeViewState extends State<AuthHomeView> {
   }
 
   SliverPadding _buildGrid() {
+    final showLoader = ctrl.loadingMore.value;
     return SliverPadding(
       padding: const EdgeInsets.all(8),
       sliver: SliverGrid.builder(
-        itemCount: ctrl.repos.length + 1,
+        itemCount: ctrl.repos.length + (showLoader ? 1 : 0),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           childAspectRatio: 1.25,
@@ -229,7 +232,7 @@ class _AuthHomeViewState extends State<AuthHomeView> {
           crossAxisSpacing: 8,
         ),
         itemBuilder: (context, i) {
-          if (i == ctrl.repos.length) {
+          if (showLoader && i == ctrl.repos.length) {
             return const Center(
               child: SizedBox(
                 height: 24,
@@ -254,9 +257,8 @@ class _AuthHomeViewState extends State<AuthHomeView> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Get.theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(16),
-          ),
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

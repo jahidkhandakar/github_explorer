@@ -1,6 +1,4 @@
 import 'package:get/get.dart';
-import 'package:dio/dio.dart';
-
 import '../model/github_repo.dart';
 import '../model/github_user.dart';
 import '../../utils/api_client.dart';
@@ -18,7 +16,7 @@ class GuestRepoController extends GetxController {
   final user = Rxn<GithubUser>(); // whose repos we're viewing
   final repos = <GithubRepo>[].obs;
 
-  final search = ''.obs;          // local filter
+  final search = ''.obs;
   final sort = RepoSort.updated.obs;
   final ascending = false.obs;
   final viewMode = ViewMode.list.obs;
@@ -26,7 +24,7 @@ class GuestRepoController extends GetxController {
   int _page = 1;
   final int _perPage = 20;
   bool _hasMore = true;
-  bool _loadingMore = false;
+  final loadingMore = false.obs;
 
   List<GithubRepo> _all = [];
 
@@ -38,13 +36,12 @@ class GuestRepoController extends GetxController {
     _all = [];
     _page = 1;
     _hasMore = true;
+    loadingMore.value = false;
 
     try {
-      // load user info
       final uRes = await _dio.get('/users/$username');
       user.value = GithubUser.fromJson(uRes.data);
 
-      // load first page of repos
       final first = await _fetchReposOf(username, page: _page);
       _all = List.from(first);
       repos.assignAll(first);
@@ -56,8 +53,10 @@ class GuestRepoController extends GetxController {
     }
   }
 
-  Future<List<GithubRepo>> _fetchReposOf(String username,
-      {required int page}) async {
+  Future<List<GithubRepo>> _fetchReposOf(
+    String username, {
+    required int page,
+  }) async {
     final res = await _dio.get(
       '/users/$username/repos',
       queryParameters: {
@@ -68,24 +67,24 @@ class GuestRepoController extends GetxController {
       },
     );
     final list = (res.data as List).cast<Map<String, dynamic>>();
-    final repos = list.map(GithubRepo.fromJson).toList();
-    _hasMore = repos.length == _perPage;
-    return repos;
+    final result = list.map(GithubRepo.fromJson).toList();
+    _hasMore = result.length == _perPage;
+    return result;
   }
 
   Future<void> loadMore() async {
     final username = user.value?.login ?? '';
     if (username.isEmpty) return;
-    if (!_hasMore || _loadingMore) return;
+    if (!_hasMore || loadingMore.value) return;
 
-    _loadingMore = true;
+    loadingMore.value = true;
     try {
       _page += 1;
       final next = await _fetchReposOf(username, page: _page);
       _all.addAll(next);
       apply();
     } finally {
-      _loadingMore = false;
+      loadingMore.value = false;
     }
   }
 
@@ -129,11 +128,8 @@ class GuestRepoController extends GetxController {
 
   void setSort(RepoSort s) {
     sort.value = s;
-    // re-fetch from GitHub to respect API sorting as well
     final username = user.value?.login ?? '';
     if (username.isEmpty) return;
-    _page = 1;
-    _hasMore = true;
     _reload(username);
   }
 
@@ -142,6 +138,10 @@ class GuestRepoController extends GetxController {
     error.value = '';
     repos.clear();
     _all = [];
+    _page = 1;
+    _hasMore = true;
+    loadingMore.value = false;
+
     try {
       final first = await _fetchReposOf(username, page: _page);
       _all = List.from(first);
@@ -173,9 +173,7 @@ class GuestRepoController extends GetxController {
       case RepoSort.name:
         return 'full_name';
       case RepoSort.stars:
-        // GitHub API doesn't offer `stars` sort here directly for /users/:user/repos,
-        // but we still sort locally by stars in apply().
-        return 'updated';
+        return 'updated'; // still sort stars locally
     }
   }
 }
