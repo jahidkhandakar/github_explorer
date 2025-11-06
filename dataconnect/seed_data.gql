@@ -1,0 +1,88 @@
+mutation SeedDatabase @transaction @auth(level: NO_ACCESS) {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      username: "testuser1",
+      email: "test1@example.com",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      username: "testuser2",
+      email: "test2@example.com",
+      createdAt: "2024-04-26T13:00:00Z"
+    }
+  ])
+  project_insertMany(data: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440000",
+      name: "Project Alpha",
+      owner: "testuser1",
+      githubId: "12345",
+      url: "http://example.com/alpha",
+      createdAt: "2024-04-26T14:00:00Z",
+      starsCount: 10,
+      forksCount: 5,
+      description: "A test project",
+      language: "JavaScript",
+      lastUpdated: "2024-04-26T15:00:00Z"
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440001",
+      name: "Project Beta",
+      owner: "testuser2",
+      githubId: "67890",
+      url: "http://example.com/beta",
+      createdAt: "2024-04-26T16:00:00Z",
+      starsCount: 20,
+      forksCount: 10,
+      description: "Another test project",
+      language: "Python",
+      lastUpdated: "2024-04-26T17:00:00Z"
+    }
+  ])
+  tag_insertMany(data: [
+    {
+      id: "750e8400-e29b-41d4-a716-446655440000",
+      name: "testtag1",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      createdAt: "2024-04-26T18:00:00Z"
+    },
+    {
+      id: "750e8400-e29b-41d4-a716-446655440001",
+      name: "testtag2",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      createdAt: "2024-04-26T19:00:00Z"
+    }
+  ])
+  favoriteProject_insertMany(data: [
+    {
+      id: "850e8400-e29b-41d4-a716-446655440000",
+      projectId: "650e8400-e29b-41d4-a716-446655440000",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      createdAt: "2024-04-26T20:00:00Z",
+      notes: "Test note 1"
+    },
+    {
+      id: "850e8400-e29b-41d4-a716-446655440001",
+      projectId: "650e8400-e29b-41d4-a716-446655440001",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      createdAt: "2024-04-26T21:00:00Z",
+      notes: "Test note 2"
+    }
+  ])
+  projectTag_insertMany(data: [
+    {
+      id: "950e8400-e29b-41d4-a716-446655440000",
+      tagId: "750e8400-e29b-41d4-a716-446655440000",
+      favoriteProjectId: "850e8400-e29b-41d4-a716-446655440000",
+      createdAt: "2024-04-26T22:00:00Z"
+    },
+    {
+      id: "950e8400-e29b-41d4-a716-446655440001",
+      tagId: "750e8400-e29b-41d4-a716-446655440001",
+      favoriteProjectId: "850e8400-e29b-41d4-a716-446655440001",
+      createdAt: "2024-04-26T23:00:00Z"
+    }
+  ])
+}

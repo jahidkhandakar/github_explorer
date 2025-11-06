@@ -1,0 +1,34 @@
+mutation CreateUser @auth(level: USER) {
+  user_insert(data: {
+    username: "default_username",
+    email: "default_email@example.com",
+    createdAt_expr: "request.time"
+  })
+}
+
+query GetProjects @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  projects {
+    id
+    name
+    description
+  }
+}
+
+mutation AddTagToFavoriteProject($favoriteProjectId: UUID!, $tagId: UUID!) @auth(level: USER) {
+  projectTag_insert(data: {
+    favoriteProjectId: $favoriteProjectId,
+    tagId: $tagId,
+    createdAt_expr: "request.time"
+  })
+}
+
+query GetFavoriteProjectsForUser($userId: UUID!) @auth(level: USER) {
+  favoriteProjects(where: {userId: {eq: $userId}}) {
+    id
+    project {
+      id
+      name
+    }
+    notes
+  }
+}

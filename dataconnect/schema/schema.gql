@@ -1,0 +1,39 @@
+type User @table {
+  username: String!
+  createdAt: Timestamp!
+  email: String
+  avatarUrl: String
+  bio: String
+}
+
+type Project @table {
+  githubId: String!
+  name: String!
+  owner: String!
+  url: String!
+  createdAt: Timestamp!
+  description: String
+  language: String
+  starsCount: Int
+  forksCount: Int
+  lastUpdated: Timestamp
+}
+
+type FavoriteProject @table {
+  user: User!
+  project: Project!
+  createdAt: Timestamp!
+  notes: String
+}
+
+type Tag @table {
+  user: User!
+  name: String!
+  createdAt: Timestamp!
+}
+
+type ProjectTag @table {
+  favoriteProject: FavoriteProject!
+  tag: Tag!
+  createdAt: Timestamp!
+}
