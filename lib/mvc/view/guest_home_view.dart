@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/guest_repo_controller.dart';
 import '../controller/theme_controller.dart';
-import '../../utils/routes.dart';
 import '../../widgets/repo_list_tile.dart';
 import '../../widgets/repo_card.dart';
 import '../../widgets/loading_view.dart';
 import '../../widgets/error_view.dart';
+import '../../utils/routes.dart';
 
 class GuestHomeView extends StatefulWidget {
   const GuestHomeView({super.key});
@@ -24,7 +24,8 @@ class _GuestHomeViewState extends State<GuestHomeView> {
     super.initState();
     ctrl = Get.put(GuestRepoController());
     _scroll.addListener(() {
-      if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
+      if (_scroll.position.pixels >=
+          _scroll.position.maxScrollExtent - 200) {
         ctrl.loadMore();
       }
     });
@@ -40,11 +41,15 @@ class _GuestHomeViewState extends State<GuestHomeView> {
   @override
   Widget build(BuildContext context) {
     final themeCtrl = Get.find<ThemeController>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Guest Mode'),
         actions: [
-          IconButton(icon: const Icon(Icons.brightness_6), onPressed: themeCtrl.toggle),
+          IconButton(
+            icon: const Icon(Icons.brightness_6),
+            onPressed: themeCtrl.toggle,
+          ),
         ],
       ),
       body: Obx(() {
@@ -56,34 +61,78 @@ class _GuestHomeViewState extends State<GuestHomeView> {
           child: CustomScrollView(
             controller: _scroll,
             slivers: [
+              // Username search row
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Row(children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _usernameCtrl,
-                        decoration: const InputDecoration(
-                          hintText: 'Enter GitHub username (e.g., flutter)',
-                          border: OutlineInputBorder(),
-                          isDense: true,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _usernameCtrl,
+                          decoration: const InputDecoration(
+                            hintText: 'Enter GitHub username (e.g., flutter)',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          onSubmitted: (v) => ctrl.loadFirst(v.trim()),
                         ),
-                        onSubmitted: (v) => ctrl.loadFirst(v.trim()),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: () => ctrl.loadFirst(_usernameCtrl.text.trim()),
-                      child: const Text('Search'),
-                    ),
-                  ]),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: () =>
+                            ctrl.loadFirst(_usernameCtrl.text.trim()),
+                        child: const Text('Search'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Filter + view toggle row (same vibe as auth)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: const InputDecoration(
+                            hintText:
+                                'Filter repos by name / description...',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                            prefixIcon: Icon(Icons.search),
+                          ),
+                          onChanged: ctrl.setSearch,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: 'Toggle view',
+                        icon: Obx(
+                          () => Icon(
+                            ctrl.viewMode.value == ViewMode.list
+                                ? Icons.grid_view
+                                : Icons.view_list,
+                          ),
+                        ),
+                        onPressed: ctrl.toggleView,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               if (ctrl.loading.value && ctrl.repos.isEmpty)
                 const SliverFillRemaining(child: LoadingView())
               else if (ctrl.error.isNotEmpty && ctrl.repos.isEmpty)
-                SliverFillRemaining(child:
-                  ErrorView(message: ctrl.error.value, onRetry: () => ctrl.loadFirst(_usernameCtrl.text.trim())))
+                SliverFillRemaining(
+                  child: ErrorView(
+                    message: ctrl.error.value,
+                    onRetry: () =>
+                        ctrl.loadFirst(_usernameCtrl.text.trim()),
+                  ),
+                )
               else
                 _buildRepoSliver(),
             ],
@@ -95,6 +144,12 @@ class _GuestHomeViewState extends State<GuestHomeView> {
 
   Widget _buildRepoSliver() {
     final ctrl = Get.find<GuestRepoController>();
+    if (ctrl.repos.isEmpty) {
+      return const SliverFillRemaining(
+        child: Center(child: Text('No repositories loaded yet')),
+      );
+    }
+
     if (ctrl.viewMode.value == ViewMode.list) {
       return SliverList.separated(
         itemCount: ctrl.repos.length + 1,
@@ -103,11 +158,20 @@ class _GuestHomeViewState extends State<GuestHomeView> {
           if (i == ctrl.repos.length) {
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: SizedBox(height: 24, width: 24, child: CircularProgressIndicator())),
+              child: Center(
+                child: SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(),
+                ),
+              ),
             );
           }
           final r = ctrl.repos[i];
-          return RepoListTile(repo: r, onTap: () => AppNav.toRepoDetails(r));
+          return RepoListTile(
+            repo: r,
+            onTap: () => AppNav.toRepoDetails(r),
+          );
         },
       );
     } else {
@@ -116,13 +180,26 @@ class _GuestHomeViewState extends State<GuestHomeView> {
         sliver: SliverGrid.builder(
           itemCount: ctrl.repos.length + 1,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2, childAspectRatio: 1.25, mainAxisSpacing: 8, crossAxisSpacing: 8),
+            crossAxisCount: 2,
+            childAspectRatio: 1.25,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+          ),
           itemBuilder: (context, i) {
             if (i == ctrl.repos.length) {
-              return const Center(child: SizedBox(height: 24, width: 24, child: CircularProgressIndicator()));
+              return const Center(
+                child: SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(),
+                ),
+              );
             }
             final r = ctrl.repos[i];
-            return RepoCard(repo: r, onTap: () => AppNav.toRepoDetails(r));
+            return RepoCard(
+              repo: r,
+              onTap: () => AppNav.toRepoDetails(r),
+            );
           },
         ),
       );

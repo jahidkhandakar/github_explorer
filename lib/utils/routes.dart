@@ -25,7 +25,7 @@ class RepoDetailsArgs {
 }
 
 class AppNav {
-  static void toGuestHome() => Get.offAllNamed(Routes.guestHome);
+  static void toGuestHome() => Get.toNamed(Routes.guestHome);
   static void toAuthHome() => Get.offAllNamed(Routes.authHome);
   static void toRepoDetails(GithubRepo repo) =>
       Get.toNamed(Routes.details, arguments: RepoDetailsArgs(repo));
